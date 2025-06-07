@@ -1,0 +1,102 @@
+/* Stili personalizzati per Sold By Romo */
+
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+}
+
+.stat-card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    height: 100%;
+}
+
+.stat-card h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #6c757d;
+}
+
+.stat-card .value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #212529;
+}
+
+.stat-card .text-success {
+    color: #28a745 !important;
+}
+
+.home-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+}
+
+.home-card {
+    text-align: center;
+    padding: 2rem 1rem;
+    height: 100%;
+}
+
+.home-card h5 {
+    margin-bottom: 1rem;
+}
+
+.bg-inventory {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.bg-purchases {
+    background-color: #28a745;
+    color: white;
+}
+
+.bg-sales {
+    background-color: #dc3545;
+    color: white;
+}
+
+.bg-stats {
+    background-color: #ffc107;
+    color: #343a40;
+}
+
+/* Stili per dispositivi mobili */
+@media (max-width: 767px) {
+    .stat-card .value {
+        font-size: 1.5rem;
+    }
+    
+    .home-card {
+        padding: 1.5rem 0.5rem;
+    }
+}

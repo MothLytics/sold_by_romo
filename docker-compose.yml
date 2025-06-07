@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  webapp:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Per permettere la persistenza del database
+      - ./sold_by_romo.db:/app/sold_by_romo.db
+    restart: unless-stopped

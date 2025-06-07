@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Statistiche - Sold By Romo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Statistiche Vendite</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Seleziona Periodo</h5>
+                <form method="GET" action="{{ url_for('statistiche') }}" class="row g-3">
+                    <div class="col-md-5">
+                        <label for="data_inizio" class="form-label">Da data</label>
+                        <input type="date" class="form-control" id="data_inizio" name="data_inizio" value="{{ data_inizio }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="data_fine" class="form-label">A data</label>
+                        <input type="date" class="form-control" id="data_fine" name="data_fine" value="{{ data_fine }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Aggiorna</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stats %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h3>Vendite Totali</h3>
+            <div class="value">{{ stats['numero_vendite'] }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h3>Ricavo Totale</h3>
+            <div class="value">€ {{ "%.2f"|format(stats['ricavo_totale']) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h3>Costo Totale</h3>
+            <div class="value">€ {{ "%.2f"|format(stats['costo_totale']) }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <h3>Profitto Totale</h3>
+            <div class="value text-success">€ {{ "%.2f"|format(stats['profitto_totale']) }}</div>
+            <div>Margine: {{ "%.2f"|format(stats['profitto_totale'] / stats['costo_totale'] * 100) if stats['costo_totale'] > 0 else 0 }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="table-container">
+            <h5>Articoli più venduti nel periodo</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Articolo</th>
+                        <th>Colore</th>
+                        <th>Numero Vendite</th>
+                        <th>Valore Totale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_items %}
+                    <tr>
+                        <td>{{ item['Articolo'] }}</td>
+                        <td>{{ item['Colore'] }}</td>
+                        <td>{{ item['num_vendite'] }}</td>
+                        <td>€ {{ "%.2f"|format(item['totale_vendite']) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nessuna vendita nel periodo selezionato</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            Nessun dato disponibile per il periodo selezionato.
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

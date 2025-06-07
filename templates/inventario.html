@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario - Sold By Romo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Inventario</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="GET" action="{{ url_for('inventario') }}" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" class="form-control" name="search" placeholder="Cerca per nome, colore o taglia..." value="{{ search }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Cerca</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('aggiungi_articolo') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Aggiungi Articolo
+        </a>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Articolo</th>
+                <th>Colore</th>
+                <th>Taglia</th>
+                <th>Quantità</th>
+                <th>Prezzo Acquisto</th>
+                <th>Prezzo Vendita</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item['ID_inventario'] }}</td>
+                <td>{{ item['nome_articolo'] }}</td>
+                <td>{{ item['colore'] }}</td>
+                <td>{{ item['taglia'] }}</td>
+                <td class="{% if item['quantita'] <= 0 %}text-danger fw-bold{% endif %}">
+                    {{ item['quantita'] }}
+                </td>
+                <td>€ {{ "%.2f"|format(item['prezzo_acquisto']) }}</td>
+                <td>€ {{ "%.2f"|format(item['prezzo_vendita']) }}</td>
+                <td>
+                    <a href="{{ url_for('modifica_articolo', id=item['ID_inventario']) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">Nessun articolo trovato</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

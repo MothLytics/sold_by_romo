@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Sold By Romo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="text-center my-4">Sold By Romo - Sistema di Gestione Inventario</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-boxes fa-2x mb-3 text-primary"></i></h5>
+                <h2 class="card-title">Inventario</h2>
+                <p class="card-text">Gestisci il tuo inventario: aggiungi nuovi articoli o modifica quelli esistenti.</p>
+                <a href="{{ url_for('inventario') }}" class="btn btn-primary">Vai all'inventario</a>
+                <a href="{{ url_for('aggiungi_articolo') }}" class="btn btn-outline-primary mt-2">Aggiungi articolo</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-shopping-cart fa-2x mb-3 text-success"></i></h5>
+                <h2 class="card-title">Acquisti</h2>
+                <p class="card-text">Registra i tuoi acquisti e aggiorna automaticamente l'inventario.</p>
+                <a href="{{ url_for('acquisti') }}" class="btn btn-success">Visualizza acquisti</a>
+                <a href="{{ url_for('aggiungi_acquisto') }}" class="btn btn-outline-success mt-2">Registra acquisto</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-cash-register fa-2x mb-3 text-danger"></i></h5>
+                <h2 class="card-title">Vendite</h2>
+                <p class="card-text">Registra le tue vendite e monitora l'andamento del business.</p>
+                <a href="{{ url_for('vendite') }}" class="btn btn-danger">Visualizza vendite</a>
+                <a href="{{ url_for('aggiungi_vendita') }}" class="btn btn-outline-danger mt-2">Registra vendita</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-chart-line fa-2x mb-3 text-info"></i></h5>
+                <h2 class="card-title">Statistiche</h2>
+                <p class="card-text">Analizza le tue vendite e i profitti nel tempo.</p>
+                <a href="{{ url_for('statistiche') }}" class="btn btn-info text-white">Visualizza statistiche</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Acquisti - Sold By Romo{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Acquisti</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12 text-end">
+        <a href="{{ url_for('aggiungi_acquisto') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Registra Acquisto
+        </a>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Articolo</th>
+                <th>Colore</th>
+                <th>Taglia</th>
+                <th>Quantità</th>
+                <th>Prezzo Unit.</th>
+                <th>Importo</th>
+                <th>Fornitore</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item['ID_acquisto'] }}</td>
+                <td>{{ item['data'] }}</td>
+                <td>{{ item['nome_articolo'] }}</td>
+                <td>{{ item['colore'] }}</td>
+                <td>{{ item['taglia'] }}</td>
+                <td>{{ item['quantita'] }}</td>
+                <td>€ {{ "%.2f"|format(item['prezzo']) }}</td>
+                <td>€ {{ "%.2f"|format(item['importo']) }}</td>
+                <td>{{ item['fornitore'] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="text-center">Nessun acquisto registrato</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
