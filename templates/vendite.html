@@ -5,9 +5,22 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="mb-4">Vendite</h1>
+        <h1 class="mb-4">Vendite{% if posto_filtro %} - {{ posto_filtro|upper }}{% endif %}</h1>
     </div>
 </div>
+
+{% if posto_filtro %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-filter"></i> Stai visualizzando le vendite per il posto: <strong>{{ posto_filtro }}</strong>
+            <a href="{{ url_for('vendite') }}" class="btn btn-sm btn-outline-secondary ms-3">
+                <i class="fas fa-times"></i> Rimuovi filtro
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="row mb-4">
     <div class="col-md-12 text-end">

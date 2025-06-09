@@ -72,17 +72,67 @@ def index():
 def inventario():
     """Visualizza l'inventario completo"""
     search = request.args.get('search', '')
-    
+    colore = request.args.get('colore', '')
+    solo_disponibili = request.args.get('disponibili', '') == 'true'
+    sort_by = request.args.get('sort', 'quantita')
+    sort_order = request.args.get('order', 'desc')
+
     db.connect()
-    
+
+    # Costruisci la query in base ai parametri
+    conditions = []
+    params = []
+
     if search:
-        items = db.cerca_articolo_inventario(search)
-    else:
-        db.cursor.execute("SELECT * FROM Inventario ORDER BY nome_articolo")
-        items = db.cursor.fetchall()
+        conditions.append("nome_articolo LIKE ?")
+        params.append(f"%{search}%")
+    if colore:
+        conditions.append("colore LIKE ?")
+        params.append(f"%{colore}%")
+    if solo_disponibili:
+        conditions.append("quantita > 0")
+
+    # Crea la query SQL
+    sql = "SELECT * FROM Inventario"
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+
+    # Gestione ordinamento
+    valid_sort_fields = {
+        'taglia': 'taglia',
+        'quantita': 'quantita',
+        'nome': 'nome_articolo',
+        'colore': 'colore',
+        'prezzo_acquisto': 'prezzo_acquisto',
+        'prezzo_vendita': 'prezzo_vendita'
+    }
+
+    sort_field = valid_sort_fields.get(sort_by, 'quantita')
+    sort_direction = 'DESC' if sort_order.lower() == 'desc' else 'ASC'
+
+    sql += f" ORDER BY {sort_field} {sort_direction}"
+    
+    db.cursor.execute(sql, params)
+    items = db.cursor.fetchall()
+    
+    # Calcola il totale del valore della merce filtrata
+    totale_acquisto = 0
+    totale_vendita = 0
+    totale_quantita = 0
+    
+    for item in items:
+        quantita = item['quantita']
+        prezzo_acquisto = item['prezzo_acquisto']
+        prezzo_vendita = item['prezzo_vendita']
+        
+        totale_quantita += quantita
+        totale_acquisto += quantita * prezzo_acquisto
+        totale_vendita += quantita * prezzo_vendita
     
     db.close()
-    return render_template('inventario.html', items=items, search=search)
+    return render_template('inventario.html', items=items, search=search, colore=colore, 
+                           totale_acquisto=totale_acquisto, totale_vendita=totale_vendita, 
+                           totale_quantita=totale_quantita, current_sort=sort_by, current_order=sort_order)
 
 @app.route('/inventario/aggiungi', methods=['GET', 'POST'])
 def aggiungi_articolo():
@@ -160,8 +210,8 @@ def modifica_articolo(id):
             quantita = ?, prezzo_acquisto = ?, prezzo_vendita = ? 
             WHERE ID_inventario = ?""",
             (form.nome_articolo.data, form.colore.data, form.taglia.data, 
-            form.quantita.data, form.prezzo_acquisto.data, 
-            form.prezzo_vendita.data, id)
+            int(form.quantita.data), float(form.prezzo_acquisto.data), 
+            float(form.prezzo_vendita.data), id)
         )
         db.conn.commit()
         db.close()
@@ -221,14 +271,92 @@ def aggiungi_acquisto():
     
     return render_template('form_acquisto.html', form=form)
 
+@app.route('/acquisti/modifica/<int:id>', methods=['GET', 'POST'])
+def modifica_acquisto(id):
+    """Modifica un acquisto esistente"""
+    db.connect()
+    
+    # Ottieni i dettagli dell'acquisto
+    acquisto = db.ottieni_acquisto(id)
+    if not acquisto:
+        db.close()
+        flash("Acquisto non trovato", 'error')
+        return redirect(url_for('acquisti'))
+    
+    form = AcquistoForm()
+    
+    if request.method == 'GET':
+        # Popola il form con i dati dell'acquisto
+        form.nome_articolo.data = acquisto['nome_articolo']
+        form.colore.data = acquisto['colore']
+        form.taglia.data = acquisto['taglia']
+        form.quantita.data = acquisto['quantita']
+        form.prezzo.data = acquisto['prezzo']
+        form.fornitore.data = acquisto['fornitore']
+    
+    if form.validate_on_submit():
+        # Aggiorna l'acquisto
+        result = db.aggiorna_acquisto(
+            id_acquisto=id,
+            nome_articolo=form.nome_articolo.data,
+            taglia=form.taglia.data,
+            colore=form.colore.data,
+            quantita=form.quantita.data,
+            prezzo=float(form.prezzo.data),
+            data=acquisto['data'],  # Mantieni la data originale
+            fornitore=form.fornitore.data
+        )
+        
+        db.close()
+        
+        if result:
+            flash("Acquisto aggiornato con successo!", 'success')
+        else:
+            flash("Errore nell'aggiornamento dell'acquisto", 'error')
+            
+        return redirect(url_for('acquisti'))
+    
+    db.close()
+    return render_template('form_acquisto.html', form=form, title="Modifica Acquisto")
+
+@app.route('/acquisti/elimina/<int:id>')
+def elimina_acquisto(id):
+    """Elimina un acquisto"""
+    db.connect()
+    result = db.elimina_acquisto(id)
+    db.close()
+    
+    if result:
+        flash("Acquisto eliminato con successo!", 'success')
+    else:
+        flash("Errore nell'eliminazione dell'acquisto", 'error')
+    
+    return redirect(url_for('acquisti'))
+
 @app.route('/vendite')
 def vendite():
     """Visualizza la lista delle vendite"""
+    posto = request.args.get('posto', '')
+    
     db.connect()
-    db.cursor.execute("SELECT * FROM Vendite ORDER BY data DESC")
+    
+    # Costruisci la query in base ai parametri
+    query = "SELECT * FROM Vendite"
+    params = []
+    
+    # Aggiungi filtro per posto se specificato
+    if posto:
+        query += " WHERE posto = ?"
+        params.append(posto)
+    
+    query += " ORDER BY data DESC"
+    
+    # Esegui la query
+    db.cursor.execute(query, params)
     items = db.cursor.fetchall()
+    
     db.close()
-    return render_template('vendite.html', items=items)
+    return render_template('vendite.html', items=items, posto_filtro=posto)
 
 @app.route('/vendite/aggiungi', methods=['GET', 'POST'])
 def aggiungi_vendita():
@@ -296,6 +424,71 @@ def api_articoli():
     
     return jsonify(result)
 
+@app.route('/api/suggest/articoli', methods=['GET'])
+def api_suggest_articoli():
+    """API per ottenere suggerimenti di nomi articoli"""
+    term = request.args.get('q', '')
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not term or len(term) < 2:
+        return jsonify([])
+    
+    db.connect()
+    
+    # Cerca articoli che iniziano con il termine di ricerca
+    db.cursor.execute("""
+    SELECT DISTINCT nome_articolo 
+    FROM Inventario 
+    WHERE LOWER(nome_articolo) LIKE LOWER(?) 
+    ORDER BY nome_articolo
+    LIMIT ?
+    """, (f"{term}%", limit))
+    
+    items = db.cursor.fetchall()
+    result = [item['nome_articolo'] for item in items]
+    
+    db.close()
+    return jsonify(result)
+
+@app.route('/api/suggest/colori', methods=['GET'])
+def api_suggest_colori():
+    """API per ottenere suggerimenti di colori"""
+    term = request.args.get('q', '')
+    limit = request.args.get('limit', 10, type=int)
+    
+    if len(term) < 1:
+        db.connect()
+        # Ritorna i primi colori più comuni
+        db.cursor.execute("""
+        SELECT colore, COUNT(*) as count 
+        FROM Inventario 
+        GROUP BY colore 
+        ORDER BY count DESC
+        LIMIT ?
+        """, (limit,))
+        
+        items = db.cursor.fetchall()
+        result = [item['colore'] for item in items]
+        db.close()
+        return jsonify(result)
+    
+    db.connect()
+    
+    # Cerca colori che iniziano con il termine di ricerca
+    db.cursor.execute("""
+    SELECT DISTINCT colore 
+    FROM Inventario 
+    WHERE LOWER(colore) LIKE LOWER(?) 
+    ORDER BY colore
+    LIMIT ?
+    """, (f"{term}%", limit))
+    
+    items = db.cursor.fetchall()
+    result = [item['colore'] for item in items]
+    
+    db.close()
+    return jsonify(result)
+
 @app.route('/statistiche')
 def statistiche():
     """Mostra statistiche di vendita"""
@@ -327,6 +520,18 @@ def statistiche():
         data_inizio=data_inizio,
         data_fine=data_fine
     )
+
+@app.route('/posti')
+def posti():
+    """Visualizza statistiche di vendita per posto"""
+    db.connect()
+    
+    # Ottieni statistiche per posto
+    stats_posti = db.get_statistiche_per_posto()
+    
+    db.close()
+    
+    return render_template('posti.html', stats_posti=stats_posti)
 
 if __name__ == '__main__':
     # Assicurati che la directory templates esista

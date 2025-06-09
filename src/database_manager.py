@@ -196,25 +196,177 @@ class SoldByRomoDatabase:
             return []
     
     def calcola_profitti_periodo(self, data_inizio, data_fine):
-        """Calcola i profitti per un determinato periodo."""
+        """Calcola i profitti in un periodo di tempo specifico."""
         try:
             if not self.conn:
                 self.connect()
             
-            sql = """
-            SELECT 
-                SUM(Prezzo_vendita - Prezzo_acquisto) as profitto_totale,
-                COUNT(*) as numero_vendite,
-                SUM(Prezzo_vendita) as ricavo_totale,
-                SUM(Prezzo_acquisto) as costo_totale
+            # Calcola i totali delle vendite
+            self.cursor.execute("""
+            SELECT COUNT(*) as num_vendite, 
+                   SUM(Prezzo_vendita) as totale_vendite,
+                   SUM(Prezzo_acquisto) as totale_costo,
+                   SUM(Prezzo_vendita - Prezzo_acquisto) as profitto
             FROM Vendite 
             WHERE data BETWEEN ? AND ?
-            """
-            self.cursor.execute(sql, (data_inizio, data_fine))
-            return self.cursor.fetchone()
+            """, (data_inizio, data_fine))
+            
+            result = self.cursor.fetchone()
+            
+            # Converti il risultato in un dizionario con le chiavi attese dal template
+            if result:
+                return {
+                    'numero_vendite': result[0],
+                    'ricavo_totale': result[1] or 0,  # Se è None, usa 0
+                    'costo_totale': result[2] or 0,   # Se è None, usa 0
+                    'profitto_totale': result[3] or 0  # Se è None, usa 0
+                }
+            else:
+                # Restituisci valori predefiniti se non ci sono risultati
+                return {
+                    'numero_vendite': 0,
+                    'ricavo_totale': 0,
+                    'costo_totale': 0,
+                    'profitto_totale': 0
+                }
         except sqlite3.Error as e:
             print(f"Errore nel calcolo dei profitti: {e}")
+            # Restituisci valori predefiniti in caso di errore
+            return {
+                'numero_vendite': 0,
+                'ricavo_totale': 0,
+                'costo_totale': 0,
+                'profitto_totale': 0
+            }
+    
+    def ottieni_acquisto(self, id_acquisto):
+        """Ottiene i dettagli di un acquisto specifico."""
+        try:
+            if not self.conn:
+                self.connect()
+            
+            self.cursor.execute("SELECT * FROM Acquisti WHERE ID_acquisto = ?", (id_acquisto,))
+            return self.cursor.fetchone()
+        except sqlite3.Error as e:
+            print(f"Errore nell'ottenimento dell'acquisto: {e}")
             return None
+    
+    def elimina_acquisto(self, id_acquisto):
+        """Elimina un acquisto dal database."""
+        try:
+            if not self.conn:
+                self.connect()
+            
+            # Elimina l'acquisto
+            self.cursor.execute("DELETE FROM Acquisti WHERE ID_acquisto = ?", (id_acquisto,))
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Errore nell'eliminazione dell'acquisto: {e}")
+            return False
+    
+    def aggiorna_acquisto(self, id_acquisto, nome_articolo, taglia, colore, quantita, prezzo, data, fornitore):
+        """Aggiorna un acquisto esistente."""
+        try:
+            if not self.conn:
+                self.connect()
+            
+            # Calcola l'importo
+            importo = float(prezzo) * int(quantita)
+            
+            # Aggiorna l'acquisto
+            self.cursor.execute(
+                """UPDATE Acquisti 
+                SET nome_articolo = ?, taglia = ?, colore = ?, quantita = ?, 
+                prezzo = ?, importo = ?, data = ?, fornitore = ? 
+                WHERE ID_acquisto = ?""",
+                (nome_articolo, taglia, colore, quantita, prezzo, importo, data, fornitore, id_acquisto)
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Errore nell'aggiornamento dell'acquisto: {e}")
+            return False
+
+    def get_statistiche_per_posto(self):
+        """Recupera le statistiche di vendita raggruppate per posto, ordinate per fatturato decrescente."""
+        try:
+            if not self.conn:
+                self.connect()
+            
+            # Prima aggiungiamo la stampa di debug per vedere i posti disponibili
+            self.cursor.execute("SELECT DISTINCT posto FROM Vendite WHERE posto IS NOT NULL AND posto != ''")
+            posti_disponibili = [row[0] for row in self.cursor.fetchall()]
+            print(f"POSTI DISPONIBILI: {posti_disponibili}")
+            
+            # Ottiene la lista dei posti unici con relativo fatturato per poterli ordinare
+            self.cursor.execute("""
+            SELECT posto, SUM(Prezzo_vendita) as fatturato_totale 
+            FROM Vendite 
+            WHERE posto IS NOT NULL AND posto != '' 
+            GROUP BY posto
+            ORDER BY fatturato_totale DESC
+            """)
+            posti = [row[0] for row in self.cursor.fetchall()]
+            
+            # Prepariamo il risultato
+            risultati = []
+            for posto in posti:
+                print(f"Elaborazione posto: {posto}")
+                # Per ogni posto, calcola le statistiche
+                self.cursor.execute("""
+                SELECT posto,
+                       COUNT(*) as num_vendite,
+                       SUM(Prezzo_vendita) as fatturato_totale,
+                       MIN(data) as prima_vendita,
+                       MAX(data) as ultima_vendita,
+                       COUNT(DISTINCT data) as giorni_vendita
+                FROM Vendite 
+                WHERE posto = ? 
+                GROUP BY posto
+                """, (posto,))
+                stats_posto = self.cursor.fetchone()
+                
+                # Articoli più venduti in questo posto
+                self.cursor.execute("""
+                SELECT Articolo, COUNT(*) as quantita, SUM(Prezzo_vendita) as fatturato
+                FROM Vendite 
+                WHERE posto = ? 
+                GROUP BY Articolo
+                ORDER BY quantita DESC
+                LIMIT 5
+                """, (posto,))
+                top_articoli = self.cursor.fetchall()
+                
+                # Aggiunge i dati al risultato
+                if stats_posto:
+                    self.conn.row_factory = sqlite3.Row  # Assicuriamoci che la row factory sia impostata
+                    # Creiamo manualmente il dizionario con i dati corretti
+                    stats = {
+                        'posto': posto,
+                        'num_vendite': stats_posto[1],
+                        'fatturato_totale': stats_posto[2],
+                        'prima_vendita': stats_posto[3],
+                        'ultima_vendita': stats_posto[4],
+                        'giorni_vendita': stats_posto[5]
+                    }
+                    
+                    # Convertiamo i top articoli in dizionari
+                    articoli_dict = []
+                    for art in top_articoli:
+                        articoli_dict.append({
+                            'Articolo': art[0],
+                            'quantita': art[1], 
+                            'fatturato': art[2]
+                        })
+                    
+                    stats['top_articoli'] = articoli_dict
+                    risultati.append(stats)
+            
+            return risultati
+        except sqlite3.Error as e:
+            print(f"Errore nel recupero delle statistiche per posto: {e}")
+            return []
 
 
 # Esempio di utilizzo

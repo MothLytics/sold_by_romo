@@ -2,56 +2,6 @@
 
 {% block title %}Inventario - Sold By Romo{% endblock %}
 
-{% block head %}
-<style>
-    .sort-header {
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .sort-header:hover {
-        color: #0d6efd;
-    }
-
-    .sort-icon {
-        margin-left: 5px;
-    }
-
-    .active-sort {
-        font-weight: bold;
-        color: #0d6efd;
-    }
-</style>
-{% endblock %}
-
-{% block head %}
-<style>
-    .sort-header {
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .sort-header:hover {
-        color: #0d6efd;
-    }
-
-    .sort-icon {
-        margin-left: 5px;
-    }
-
-    .active-sort {
-        font-weight: bold;
-        color: #0d6efd;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row">
     <div class="col-12">
@@ -62,8 +12,6 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <form method="GET" action="{{ url_for('inventario') }}" class="row g-3" id="searchForm">
-                    <input type="hidden" name="sort" value="{{ current_sort|default('quantita') }}">
-                    <input type="hidden" name="order" value="{{ current_order|default('desc') }}">
             <div class="col-md-5">
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" id="searchArticolo" name="search" placeholder="Articolo" value="{{ search }}" autocomplete="off">
@@ -80,12 +28,6 @@
             </div>
             <div class="col-md-3">
                 <button type="submit" class="btn btn-primary h-100 w-100">Cerca</button>
-            </div>
-            <div class="col-12 mt-2">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="soloDisponibiliCheck" name="disponibili" value="true" {{ 'checked' if request.args.get('disponibili') == 'true' else '' }}>
-                    <label class="form-check-label" for="soloDisponibiliCheck">Mostra solo articoli disponibili</label>
-                </div>
             </div>
         </form>
     </div>
@@ -140,42 +82,12 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="nome">
-                        Articolo
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="colore">
-                        Colore
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="taglia">
-                        Taglia
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="quantita">
-                        Quantità
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="prezzo_acquisto">
-                        Prezzo Acquisto
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
-                <th>
-                    <a href="#" class="sort-header" data-sort="prezzo_vendita">
-                        Prezzo Vendita
-                        <span class="sort-icon"></span>
-                    </a>
-                </th>
+                <th>Articolo</th>
+                <th>Colore</th>
+                <th>Taglia</th>
+                <th>Quantità</th>
+                <th>Prezzo Acquisto</th>
+                <th>Prezzo Vendita</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -227,94 +139,6 @@
         const suggestionsContainer = document.getElementById('suggestionsContainer');
         const coloriContainer = document.getElementById('coloriContainer');
         const searchForm = document.getElementById('searchForm');
-
-        // Aggiungere parametri di ordinamento al form
-        const currentSort = new URLSearchParams(window.location.search).get('sort') || 'quantita';
-        const currentOrder = new URLSearchParams(window.location.search).get('order') || 'desc';
-
-        // Creare campi nascosti per l'ordinamento
-        const sortInput = document.createElement('input');
-        sortInput.type = 'hidden';
-        sortInput.name = 'sort';
-        sortInput.value = currentSort;
-        searchForm.appendChild(sortInput);
-
-        const orderInput = document.createElement('input');
-        orderInput.type = 'hidden';
-        orderInput.name = 'order';
-        orderInput.value = currentOrder;
-        searchForm.appendChild(orderInput);
-
-        // Gestire l'ordinamento quando si fa clic sulle intestazioni
-        const sortHeaders = document.querySelectorAll('.sort-header');
-        sortHeaders.forEach(header => {
-            const sortField = header.dataset.sort;
-            const iconSpan = header.querySelector('.sort-icon');
-
-            // Imposta l'icona corretta per la colonna attualmente ordinata
-            if (sortField === currentSort) {
-                iconSpan.innerHTML = currentOrder === 'asc' ? '↑' : '↓';
-                header.classList.add('active-sort');
-            }
-
-            header.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                // Cambia l'ordine se la stessa colonna viene cliccata di nuovo
-                if (sortField === currentSort) {
-                    orderInput.value = currentOrder === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortInput.value = sortField;
-                    orderInput.value = 'asc'; // Default a crescente quando si cambia colonna
-                }
-
-                searchForm.submit();
-            });
-        });
-
-        // Aggiungere parametri di ordinamento al form
-        const currentSort = new URLSearchParams(window.location.search).get('sort') || 'quantita';
-        const currentOrder = new URLSearchParams(window.location.search).get('order') || 'desc';
-
-        // Creare campi nascosti per l'ordinamento
-        const sortInput = document.createElement('input');
-        sortInput.type = 'hidden';
-        sortInput.name = 'sort';
-        sortInput.value = currentSort;
-        searchForm.appendChild(sortInput);
-
-        const orderInput = document.createElement('input');
-        orderInput.type = 'hidden';
-        orderInput.name = 'order';
-        orderInput.value = currentOrder;
-        searchForm.appendChild(orderInput);
-
-        // Gestire l'ordinamento quando si fa clic sulle intestazioni
-        const sortHeaders = document.querySelectorAll('.sort-header');
-        sortHeaders.forEach(header => {
-            const sortField = header.dataset.sort;
-            const iconSpan = header.querySelector('.sort-icon');
-
-            // Imposta l'icona corretta per la colonna attualmente ordinata
-            if (sortField === currentSort) {
-                iconSpan.innerHTML = currentOrder === 'asc' ? '↑' : '↓';
-                header.classList.add('active-sort');
-            }
-
-            header.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                // Cambia l'ordine se la stessa colonna viene cliccata di nuovo
-                if (sortField === currentSort) {
-                    orderInput.value = currentOrder === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortInput.value = sortField;
-                    orderInput.value = 'asc'; // Default a crescente quando si cambia colonna
-                }
-
-                searchForm.submit();
-            });
-        });
         
         // Timeout per evitare troppe chiamate all'API
         let searchTimeout = null;
@@ -450,14 +274,6 @@
         if (searchColoreInput && coloriContainer) {
             setupAutocomplete(searchColoreInput, coloriContainer, '/api/suggest/colori');
             setupKeyboardNavigation(searchColoreInput, coloriContainer);
-        }
-        
-        // Gestione checkbox Solo Disponibili
-        const soloDisponibiliCheck = document.getElementById('soloDisponibiliCheck');
-        if (soloDisponibiliCheck) {
-            soloDisponibiliCheck.addEventListener('change', function() {
-                searchForm.submit();
-            });
         }
     });
 </script>

@@ -53,6 +53,10 @@
                         <a class="nav-link {% if 'statistiche' in request.path %}active{% endif %}" 
                            href="{{ url_for('statistiche') }}">Statistiche</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'posti' in request.path %}active{% endif %}" 
+                           href="{{ url_for('posti') }}">Posti</a>
+                    </li>
                 </ul>
             </div>
         </div>
